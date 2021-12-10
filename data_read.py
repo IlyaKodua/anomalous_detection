@@ -1,29 +1,32 @@
 import glob
+
+from numpy.core.fromnumeric import size
 from sound_to_spectrum import*
 import numpy as np
 
 
-N = 200
-Fs = 30
-x = np.arange(N)/N
+
+list_files = glob.glob("dev_data_ToyConveyor/ToyConveyor/train/*.wav")
 
 
-y = np.log(2 + np.sin(2*np.pi*30*x))
+mel = to_mel(list_files[0])
 
-spc = np.abs(np.fft.fft(y))
-plt.plot(spc)
-plt.show()
+size_len = 5
+size_of = [len(list_files)*(mel.shape[1] - size_len), 1,size_len,  mel.shape[0] ]
+arr = np.zeros(size_of)
 
-# list_files = glob.glob("/media/ilya/TOSHIBA EXT/dev_data_ToyConveyor/ToyConveyor/train/*.wav")
+cnt = 0
+for i, file in enumerate(list_files):
+  mel = to_mel(file)
 
+  id_start = 0
+  id_end = size_len
 
-# mel = to_mel(list_files[0])
+  for k in range(mel.shape[1] - size_len):
+    arr[cnt,0,:,:] = mel[:, id_start:id_end].T
+    id_start += 1
+    id_end += 1
+    cnt += 1
+  print(i)
 
-# size_of = [len(list_files), 1, mel.shape[0], mel.shape[1]]
-# arr = np.zeros(size_of)
-
-# for i, file in enumerate(list_files):
-#   arr[i,0,:,:] = to_mel(file)
-#   print(i)
-
-# np.save("arr", arr)
+np.save("train_arr", arr)
