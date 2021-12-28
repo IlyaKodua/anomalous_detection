@@ -30,3 +30,30 @@ class AE(nn.Module):
 
     def forward(self,x):
         return self.model(x.float())
+
+
+
+
+
+# class AE(nn.Module):
+
+#     def __init__(self):
+#         super().__init__()
+        
+#         self.model = nn.Sequential(
+#             nn.Conv2d(1,1,3, 1, 1),
+#             nn.ReLU6(inplace=True),
+#             nn.Conv2d(1,1,3, 1, 1),
+#             nn.ReLU6(inplace=True),
+#             nn.Conv2d(1,1,3, 1, 1),
+#             nn.ReLU6(inplace=True),
+#             nn.Conv2d(1,1,3, 1, 1),
+#             nn.ReLU6(inplace=True),
+#             nn.Conv2d(1,1,3, 1, 1),
+#             nn.ReLU6(inplace=True),
+#             nn.Conv2d(1,1,3, 1, 1),
+#             nn.Tanh()
+#         )
+
+#     def forward(self,x):
+#         return self.model(x.float())

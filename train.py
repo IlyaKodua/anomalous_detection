@@ -1,10 +1,17 @@
 from tokenize import Bracket
 import numpy as np
 from numpy.core.numeric import outer
+from numpy.lib.npyio import load
+from scipy.ndimage.measurements import label
 import torch
 from torch.nn.modules.loss import L1Loss
 from autoenc import*
 import matplotlib.pyplot as plt
+import pickle
+from test import*
+BATCH_SIZE = 128
+
+
 def initialize_weights(m):
   if isinstance(m, nn.Conv2d):
       nn.init.xavier_normal_(m.weight.data)
@@ -19,45 +26,53 @@ def initialize_weights(m):
 
 
 
-def to_batch_train(batch_size):
-    data = np.load('train_arr.npy')
-    n = data.shape[0]//batch_size
-    data = torch.from_numpy(data)
-    id_start = 0
-    id_end = batch_size
-    train = []
-    for i in range(n):
-        train.append(data[id_start:id_end])
-        id_start += batch_size
-        id_end += batch_size
-    if(id_start != data.shape[0]):
-        train.append(data[id_start:data.shape[0]])
-    return train
+def load_data(name):
+    with open(name, 'rb') as f:
+        return pickle.load(f)
+
+def get_size(array):
+    batch = 0
+    for a in array:
+        batch += a.shape[0]
+    size2 = array[0][0].shape
+    return (batch, size2[0], size2[1], size2[2])
+
+def to_batch_train():
+    data = load_data('arrtrain')
+    size = get_size(data)
+    data_array = torch.zeros(size)
+    cnt = 0
+    for array in data:
+        for a in array:
+            data_array[cnt,:,:,:] = torch.from_numpy(a)
+            cnt += 1
+    return data_array
 
 
-def to_batch_test(batch_size):
-    data = np.load('val_arr.npy')
-    labels = np.load('labels_val.npy')
-    n = data.shape[0]//batch_size
-    data = torch.from_numpy(data)
-    id_start = 0
-    id_end = batch_size
-    test = []
-    label = []
-    for i in range(n):
-        test.append(data[id_start:id_end])
-        label.append(labels[id_start:id_end])
-        id_start += batch_size
-        id_end += batch_size
-    if(id_start != data.shape[0]):
-        test.append(data[id_start:data.shape[0]])
-        label.append(labels[id_start:data.shape[0]])
-    return test, label
 
-BATCH_SIZE = 64
+def to_batch_test():
+    data = load_data('arrtest')
+    labels = load_data('labelstest')
+    size = get_size(data)
+    label = torch.zeros(size[0])
+    data_array = torch.zeros(size)
+    cnt = 0
+    for i,array in enumerate(data):
+        for a in array:
+            data_array[cnt,:,:,:] = torch.from_numpy(a)
+            if labels[i] == 1:
+                label[cnt] = 1
+            cnt += 1
+    return data_array, label
+
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-data = to_batch_train(BATCH_SIZE)
+
+
+data = to_batch_train()
+
+test_data, label = to_batch_test()
+
 net = AE()
 net.apply(initialize_weights)
 
@@ -72,23 +87,34 @@ criterion.to(device)
 
 
 
-epoch = 1
+epoch = 100
 
 
 
+N = data.shape[0]//BATCH_SIZE 
 
-
-
+epoch_cnt = 0
 for i in range(epoch):
-    for k, input in enumerate(data):
+    id1 = 0
+    id2 = BATCH_SIZE
+    for i in range(N):
         net.train()
+        input = data[id1:id2].to(device)
         optimizer.zero_grad()
-        out = net(input.to(device))
+        out = net(input)
 
         loss = criterion(out, input)
         loss.backward()
-        print(loss.item())
         optimizer.step()
+        id1 += BATCH_SIZE
+        id2 += BATCH_SIZE
+    epoch_cnt += 1
+    print(epoch_cnt)
+
+
+    
+validation(net, test_data, label, criterion)
+    
 
 
 torch.save(net.state_dict(), 'net.pth')
