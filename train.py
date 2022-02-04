@@ -1,7 +1,4 @@
-from tokenize import Bracket
 import numpy as np
-from numpy.core.numeric import outer
-from numpy.lib.npyio import load
 from scipy.ndimage.measurements import label
 import torch
 from torch.nn.modules.loss import L1Loss
@@ -9,7 +6,7 @@ from autoenc import*
 import matplotlib.pyplot as plt
 import pickle
 from test import*
-BATCH_SIZE = 128
+BATCH_SIZE = 1024
 
 
 def initialize_weights(m):
@@ -79,12 +76,13 @@ net.apply(initialize_weights)
 criterion = nn.MSELoss()
 optimizer = torch.optim.Adam(net.parameters(), lr=1e-3)
 
+# net = forward(net)
 
 net.to(device)
 criterion.to(device)
 
 
-
+net = nn.DataParallel(net)
 
 
 epoch = 100
@@ -101,9 +99,12 @@ for i in range(epoch):
         net.train()
         input = data[id1:id2].to(device)
         optimizer.zero_grad()
-        out = net(input)
+        x1, x2, x4, x5, x6 = net(input)
 
-        loss = criterion(out, input)
+        loss = criterion(x6, input)
+        # loss += criterion(x1, x5)
+        # loss += criterion(x2, x4)
+
         loss.backward()
         optimizer.step()
         id1 += BATCH_SIZE
