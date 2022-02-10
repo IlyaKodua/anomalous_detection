@@ -34,8 +34,8 @@ def get_size(array):
     size2 = array[0][0].shape
     return (batch, size2[0], size2[1], size2[2])
 
-def to_batch_train():
-    data = load_data('arrtrain')
+def to_batch_train(file):
+    data = load_data(file)
     size = get_size(data)
     data_array = torch.zeros(size)
     cnt = 0
@@ -47,9 +47,9 @@ def to_batch_train():
 
 
 
-def to_batch_test():
-    data = load_data('arrtest')
-    labels = load_data('labelstest')
+def to_batch_test(file_data, file_labels):
+    data = load_data(file_data)
+    labels = load_data(file_labels)
     size = get_size(data)
     label = torch.zeros(size[0])
     data_array = torch.zeros(size)
@@ -62,63 +62,79 @@ def to_batch_test():
             cnt += 1
     return data_array, label
 
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+def train(train_type, test_type, cls):
+
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+
+    data = to_batch_train("data/arr/spectrs_" + cls + "_" + "train")
+
+    test_data, label = to_batch_test("data/arr/spectrs_" + cls + "_test",
+                                     "data/labels/labl_" + cls + "_test")
+
+    net = AE()
+
+    criterion = nn.MSELoss()
+    optimizer = torch.optim.Adam(net.parameters(), lr=1e-3)
+
+    # net = forward(net)
+
+    net.to(device)
+    criterion.to(device)
+
+
+    net = nn.DataParallel(net)
+
+
+    epoch = 10
 
 
 
-data = to_batch_train()
+    N = data.shape[0]//BATCH_SIZE 
 
-test_data, label = to_batch_test()
+    epoch_cnt = 0
+    for i in range(epoch):
+        id1 = 0
+        id2 = BATCH_SIZE
+        for i in range(N):
+            net.train()
+            input = data[id1:id2].to(device)
+            optimizer.zero_grad()
+            x1, x2, x4, x5, x6 = net(input)
 
-net = AE()
-net.apply(initialize_weights)
+            loss = criterion(x6, input)
+            if train_type == "LBL":
+                loss += criterion(x1, x5)
+                loss += criterion(x2, x4)
 
-criterion = nn.MSELoss()
-optimizer = torch.optim.Adam(net.parameters(), lr=1e-3)
+            loss.backward()
+            optimizer.step()
+            id1 += BATCH_SIZE
+            id2 += BATCH_SIZE
 
-# net = forward(net)
-
-net.to(device)
-criterion.to(device)
-
-
-net = nn.DataParallel(net)
-
-
-epoch = 100
-
-
-
-N = data.shape[0]//BATCH_SIZE 
-
-epoch_cnt = 0
-for i in range(epoch):
-    id1 = 0
-    id2 = BATCH_SIZE
-    for i in range(N):
-        net.train()
+        id2 = data.shape[0]
         input = data[id1:id2].to(device)
         optimizer.zero_grad()
         x1, x2, x4, x5, x6 = net(input)
 
         loss = criterion(x6, input)
-        # loss += criterion(x1, x5)
-        # loss += criterion(x2, x4)
+        if train_type == "LBL":
+            loss += criterion(x1, x5)
+            loss += criterion(x2, x4)
 
         loss.backward()
         optimizer.step()
-        id1 += BATCH_SIZE
-        id2 += BATCH_SIZE
-    epoch_cnt += 1
-    print(epoch_cnt)
+        
+        epoch_cnt += 1
 
 
-    
-validation(net, test_data, label, criterion)
-    
+
+        
+    validation(net, test_data, label, criterion, train_type, test_type, cls)
+        
 
 
-torch.save(net.state_dict(), 'net.pth')
+    # torch.save(net.state_dict(), 'net.pth')
 
 
 
