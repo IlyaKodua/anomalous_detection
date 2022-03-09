@@ -16,9 +16,10 @@ def to_mel(file_name):
 
 
 def norm_to_log(mel):
-	mel = np.log(1 + mel)/ np.log(1 + np.max(mel))
-	mel = 2*mel - 1
-	return mel
+	# mel = np.log(1 + mel)/ np.log(1 + np.max(mel))
+	# mel = 2*mel - 1
+
+	return 2*(mel - np.min(mel)) / (np.max(mel) - np.min(mel)) - 1
 
 
 def detect(mel):
