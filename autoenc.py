@@ -10,27 +10,36 @@ class AE(nn.Module):
         super().__init__()
         
         self.l1 = nn.Sequential(
-            nn.Linear(128, 128),
-            nn.ReLU6(inplace=True),
+            nn.Linear(128,128),
+            nn.ReLU(inplace=True),
             nn.BatchNorm2d(1))
         self.l2 = nn.Sequential(
-            nn.Linear(128, 128),
-            nn.ReLU6(inplace=True),
+            nn.Linear(128,128),
+            nn.ReLU(inplace=True),
             nn.BatchNorm2d(1))
         self.l3 = nn.Sequential(
-            nn.Linear(128,32),
-            nn.ReLU6(inplace=True),
+            nn.Linear(128,128),
+            nn.ReLU(inplace=True),
             nn.BatchNorm2d(1))
         self.l4 = nn.Sequential(
-            nn.Linear(32,128),
-            nn.ReLU6(inplace=True),
+            nn.Linear(128,32),
+            nn.ReLU(inplace=True),
             nn.BatchNorm2d(1))
         self.l5 = nn.Sequential(
-            nn.Linear(128,128),
-            nn.BatchNorm2d(1),
-            nn.ReLU6(inplace=True))
+            nn.Linear(32,128),
+            nn.ReLU(inplace=True),
+            nn.BatchNorm2d(1))
         self.l6 = nn.Sequential(
-            nn.Linear(128,128))
+            nn.Linear(128,128),
+            nn.ReLU(inplace=True),
+            nn.BatchNorm2d(1))
+        self.l7 = nn.Sequential(
+            nn.Linear(128,128),
+            nn.ReLU(inplace=True),
+            nn.BatchNorm2d(1))
+        self.l8 = nn.Sequential(
+            nn.Linear(128,128),
+            nn.Tanh())
 
     def forward(self,x):
         x1 = self.l1(x)
@@ -39,7 +48,9 @@ class AE(nn.Module):
         x4 = self.l4(x3)
         x5 = self.l5(x4)
         x6 = self.l6(x5)
-        return x1, x2, x4, x5, x6
+        x7 = self.l7(x6)
+        output = self.l8(x7)
+        return x1, x2, x3, x5, x6, x7, output
 
 
 

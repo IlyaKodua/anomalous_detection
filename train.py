@@ -36,31 +36,23 @@ def get_size(array):
 
 def to_batch_train(file):
     data = load_data(file)
-    size = get_size(data)
-    data_array = torch.zeros(size)
-    cnt = 0
-    for array in data:
-        for a in array:
-            data_array[cnt,:,:,:] = torch.from_numpy(a)
-            cnt += 1
-    return data_array
+    output = []
+    for d in data:
+        x = d["data"]
+        output.append(torch.from_numpy(x))
+    return output
 
 
 
-def to_batch_test(file_data, file_labels):
-    data = load_data(file_data)
-    labels = load_data(file_labels)
-    size = get_size(data)
-    label = torch.zeros(size[0])
-    data_array = torch.zeros(size)
-    cnt = 0
-    for i,array in enumerate(data):
-        for a in array:
-            data_array[cnt,:,:,:] = torch.from_numpy(a)
-            if labels[i] == 1:
-                label[cnt] = 1
-            cnt += 1
-    return data_array, label
+def to_batch_test(file):
+    data = load_data(file)
+    output = []
+    lables  = []
+    for d in data:
+        # n = d["data"].shape[0]
+        output.append(torch.from_numpy(d["data"]))
+        lables.append(d["labels"])
+    return output, lables
 
 def train(train_type, test_type, cls):
 
@@ -69,8 +61,7 @@ def train(train_type, test_type, cls):
 
     data = to_batch_train("data/arr/spectrs_" + cls + "_" + "train")
 
-    test_data, label = to_batch_test("data/arr/spectrs_" + cls + "_test",
-                                     "data/labels/labl_" + cls + "_test")
+    test_data, label = to_batch_test("data/arr/spectrs_" + cls + "_test")
 
     net = AE()
 
@@ -86,46 +77,28 @@ def train(train_type, test_type, cls):
     net = nn.DataParallel(net)
 
 
-    epoch = 10
+    epoch = 1
 
 
 
-    N = data.shape[0]//BATCH_SIZE 
 
-    epoch_cnt = 0
+
     for i in range(epoch):
-        id1 = 0
-        id2 = BATCH_SIZE
-        for i in range(N):
+        print("epoch ", i, ", ", epoch)
+        for d in data:
             net.train()
-            input = data[id1:id2].to(device)
+            input = d.float().to(device)
             optimizer.zero_grad()
-            x1, x2, x4, x5, x6 = net(input)
+            x1, x2, x3, x5, x6, x7, output = net(input)
 
-            loss = criterion(x6, input)
+            loss = criterion(output, input)
             if train_type == "LBL":
-                loss += criterion(x1, x5)
-                loss += criterion(x2, x4)
+                loss += 0.3*criterion(x1, x7)
+                loss += 0.3*criterion(x2, x6)
+                loss += 0.3*criterion(x3, x5)
 
             loss.backward()
             optimizer.step()
-            id1 += BATCH_SIZE
-            id2 += BATCH_SIZE
-
-        id2 = data.shape[0]
-        input = data[id1:id2].to(device)
-        optimizer.zero_grad()
-        x1, x2, x4, x5, x6 = net(input)
-
-        loss = criterion(x6, input)
-        if train_type == "LBL":
-            loss += criterion(x1, x5)
-            loss += criterion(x2, x4)
-
-        loss.backward()
-        optimizer.step()
-        
-        epoch_cnt += 1
 
 
 
@@ -134,7 +107,7 @@ def train(train_type, test_type, cls):
         
 
 
-    # torch.save(net.state_dict(), 'net.pth')
+    torch.save(net.state_dict(), 'net.pth')
 
 
 

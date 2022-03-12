@@ -7,14 +7,11 @@ import numpy as np
 from torch.utils import mkldnn as mkldnn_utils
 from sklearn.metrics import roc_auc_score
 from sklearn import metrics
-import cxx_code.code
-
+from sklearn import metrics
 # def AUC2(loss_norm, loss_anomaly):
 #     for
 #     return cxx_code.code.AUC(loss_anomaly.tolist(), loss_norm.tolist())*100
 
-def _AUC(loss_norm, loss_anomaly):
-    return cxx_code.code.AUC(loss_anomaly.tolist(), loss_norm.tolist())*100
 
 def r_pirson(X,Y):
     cov = torch.sum( (X - torch.mean(X)) * (Y - torch.mean(Y))  )/(torch.prod(torch.tensor(X.shape))-1) 
@@ -24,86 +21,51 @@ def r_pirson(X,Y):
 
 def validation(net, data, label, criterion, train_type, test_type, cls):
     print("Val")
-    BATCH_SIZE = 1024
     net.eval()
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    N = data.shape[0]//BATCH_SIZE 
 
     np.random.seed(16)
 
-    id1 = 0
-    id2 = BATCH_SIZE
-
-    loss_anomaly = []
-    loss_norm = []
+    y_pred = []
      
     cnt = 0 
-    for i in range(N):
+    cnt_n = 0
+    for x in data:
         net.eval()
         with torch.no_grad():
-            input = data[id1:id2].to(device)
-            batch_lab = label[id1:id2].to(device)
-            x1, x2, x4, x5, x6 = net(input)
-            cnt += r_pirson(x2, x4)
+            input = x.float().to(device)
+            loss_arr = np.zeros(input.shape[0])
             for i in range(input.shape[0]):
-                loss = criterion(x6[i], input[i])
-                if(test_type == "LBL"):
-                    loss += criterion(x1[i], x5[i])
-                    loss += criterion(x2[i], x4[i])
-                if batch_lab[i] == 0:
-                    loss_norm.append(loss.item())
-                elif batch_lab[i] == 1:
-                    loss_anomaly.append(loss.item())
-            id1 += BATCH_SIZE
-            id2 += BATCH_SIZE
+                x1, x2, x3, x5, x6, x7, output = net(input)
+
+                loss = criterion(output, input)
+                cnt += r_pirson(x3, x5)
+                cnt_n += 1
+                if test_type == "LBL":
+                    loss += criterion(x1, x7)
+                    loss += criterion(x2, x6)
+                    loss += criterion(x3, x5)
+                loss_arr[i] = loss.cpu().item()
+
+            y_pred.append(np.mean(loss_arr))
+
     
+    cnt /= (cnt_n)
 
-    id2 = data.shape[0]
-    with torch.no_grad():
-        input = data[id1:id2].to(device)
-        batch_lab = label[id1:id2].to(device)
-        x1, x2, x4, x5, x6 = net(input)
-        cnt += r_pirson(x2, x4)
-        for i in range(input.shape[0]):
-            loss = criterion(x6[i], input[i])
-            if(test_type == "LBL"):
-                loss += criterion(x1[i], x5[i])
-                loss += criterion(x2[i], x4[i])
-            if batch_lab[i] == 0:
-                loss_norm.append(loss.item())
-            elif batch_lab[i] == 1:
-                loss_anomaly.append(loss.item())
-    cnt /= (N+1)
-    # loss_noise = []
-    # with torch.no_grad():
-    #     input = torch.rand((128,1,5,128)).to(device)
-    #     x1, x2, x4, x5, x6 = net(input)
-
-    #     for i in range(128):
-    #         loss = criterion(x6[i], input[i])
-    #         loss += criterion(x1[i], x5[i])
-    #         loss += criterion(x2[i], x4[i])
-    #     loss_noise.append(loss.item())
-
-
-    loss_anomaly = np.array(loss_anomaly)
-    np.random.shuffle(loss_anomaly)
-    # loss_anomaly.reshape((1, len(loss_anomaly)))
-
-    loss_norm = np.array(loss_norm)
-    np.random.shuffle(loss_norm)
-    # loss_norm = loss_norm.reshape((len(loss_norm), 1))
-
+    y_pred = np.array(y_pred)
+    y_true = np.array(label)
 
     # loss_noise = np.array(loss_noise)
-    # np.random.shuffle(loss_noise)
-    # loss_noise = loss_noise.reshape((1, len(loss_noise)))
+    auc = metrics.roc_auc_score(y_true, y_pred)
+    pauc = metrics.roc_auc_score(y_true, y_pred, max_fpr = 0.1)
+    fpr, tpr, thresholds = metrics.roc_curve(1 + y_true, y_pred, pos_label=2)
+    auc2 = metrics.auc(fpr, tpr)
 
-    # loss_noise = np.array(loss_noise)
-    ls_anom = _AUC(loss_norm.astype("float32"), loss_anomaly.astype("float32"))
     print("class: ", cls)
     print("test type: ", test_type, ", train type: ", train_type)
-    print("Anomaly acc: ", ls_anom, " %")
+    print("Anomaly acc: ", auc, " %")
+    print("Anomaly acc 2: ", auc2, " %")
+    print("pAnomaly acc: ", pauc, " %")
     print("Corr: ", cnt)
     # print("Noise acc: ", ls_noise)
 

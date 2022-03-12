@@ -16,25 +16,18 @@ def to_mel(file_name):
 
 
 def norm_to_log(mel):
-	mel = np.log(1 + mel)/ np.log(1 + np.max(mel))
-	mel = 2*mel - 1
+	# mel = np.log(1 + mel)/ np.log(1 + np.max(mel))
+	mel = 2 * (mel - np.min(mel)) / (np.max(mel) - np.min(mel)) - 1
 	return mel
 
 
 def detect(mel):
 
-	# mean_energi = np.mean(mel) * 128
-
-	# detected_array = set()
 
 	N = len(mel[0,:])
 	win = 2
-	# for ti in range(N):
-	# 	if np.sum(mel[:,ti]) > mean_energi*1.5 and ti >= win and ti < N - win :
-	# 		detected_array.add(ti)
 
-	# new_array = np.zeros((len(detected_array), 1, 2*win + 1, 128))
-	step = win + 1
+	step = 2*win + 1
 	size_array = int((N - 2*win - 1) / step)
 	new_array = np.zeros((size_array, 1, 2*win + 1, 128))
 
@@ -42,10 +35,7 @@ def detect(mel):
 		id = win + i*step
 		new_array[i,:,:,:] = norm_to_log(mel[:,id-win:id+win+1].T)
 
-	# cnt = 0
-	# for ti in detected_array:
-	# 	new_array[cnt,:,:,:] = norm_to_log(mel[:,ti-win:ti+win].T)
-	# 	cnt += 1
+
 	
 	return new_array
 

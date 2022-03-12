@@ -3,11 +3,11 @@ import numpy as np
 from train import*
 import time
 
-classes = ["fan", "pump", "slider", "ToyCar", "ToyConveyor", "valve" ]
+classes = ["fan"]
 
 
-test_types = ["classic", "LBL"]
-train_types = ["classic", "LBL"]
+test_types = ["classic"]
+train_types = ["LBL"]
 
 for cls in classes:
     for train_type in train_types:

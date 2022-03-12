@@ -6,7 +6,7 @@ from sound_to_spectrum import*
 import numpy as np
 from random import shuffle
 
-classes = ["fan", "pump", "slider", "ToyCar", "ToyConveyor", "valve" ] 
+classes = ["fan"] 
 tips = ["train", "test"]
 
 for cls in classes:
@@ -22,19 +22,16 @@ for cls in classes:
 
 		for i, file in enumerate(list_files):
 			
-			if 'anomaly' in file :
-				labels[i] = 1
+			arr_dict = dict()
 			
-			arr.append(detect(to_mel(file)))
-			# plt.imshow(arr[0][0][0])
-			# plt.show()
-			# print('Calculating: ', int(i/len(list_files)*100), ' %')
+			arr_dict["data"] = detect(to_mel(file))
 
+			if 'anomaly' in file :
+				arr_dict["labels"] = 1
+			else:
+				arr_dict["labels"] = 0
+
+			arr.append(arr_dict)
 
 		with open('data/arr/spectrs' + "_" + cls +"_"+ tip, 'wb') as f:
 			pickle.dump(arr, f)
-
-
-		if(tip == "test"):
-			with open('data/labels/labl'+ "_" + cls + "_" + tip, 'wb') as f:
-				pickle.dump(labels, f)
