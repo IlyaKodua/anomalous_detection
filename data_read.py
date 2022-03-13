@@ -21,10 +21,11 @@ for cls in classes:
 		arr = []
 
 		for i, file in enumerate(list_files):
+			print(int((i+1)/len(list_files)*100), " %")
 			
 			arr_dict = dict()
 			
-			arr_dict["data"] = detect(to_mel(file))
+			arr_dict["data"] = to_embedding(file)
 
 			if 'anomaly' in file :
 				arr_dict["labels"] = 1
