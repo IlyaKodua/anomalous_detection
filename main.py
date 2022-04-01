@@ -3,7 +3,7 @@ import numpy as np
 from train import*
 import time
 
-classes = ["fan"]
+classes = ["pump"]
 
 
 test_types = ["classic"]

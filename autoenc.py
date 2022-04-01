@@ -6,39 +6,31 @@ import torch.nn.functional as F
 
 class AE(nn.Module):
 
-    def __init__(self):
+    def __init__(self, n):
         super().__init__()
         
         self.l1 = nn.Sequential(
-            nn.Linear(128,128),
+            nn.Linear(n,n),
             nn.ReLU(inplace=True),
             nn.BatchNorm2d(1))
         self.l2 = nn.Sequential(
-            nn.Linear(128,128),
+            nn.Linear(n,n),
             nn.ReLU(inplace=True),
             nn.BatchNorm2d(1))
         self.l3 = nn.Sequential(
-            nn.Linear(128,128),
+            nn.Linear(n,n//4),
             nn.ReLU(inplace=True),
             nn.BatchNorm2d(1))
         self.l4 = nn.Sequential(
-            nn.Linear(128,32),
+            nn.Linear(n//4,n),
             nn.ReLU(inplace=True),
             nn.BatchNorm2d(1))
         self.l5 = nn.Sequential(
-            nn.Linear(32,128),
+            nn.Linear(n,n),
             nn.ReLU(inplace=True),
             nn.BatchNorm2d(1))
         self.l6 = nn.Sequential(
-            nn.Linear(128,128),
-            nn.ReLU(inplace=True),
-            nn.BatchNorm2d(1))
-        self.l7 = nn.Sequential(
-            nn.Linear(128,128),
-            nn.ReLU(inplace=True),
-            nn.BatchNorm2d(1))
-        self.l8 = nn.Sequential(
-            nn.Linear(128,128),
+            nn.Linear(n,n),
             nn.Tanh())
 
     def forward(self,x):
@@ -48,9 +40,7 @@ class AE(nn.Module):
         x4 = self.l4(x3)
         x5 = self.l5(x4)
         x6 = self.l6(x5)
-        x7 = self.l7(x6)
-        output = self.l8(x7)
-        return x1, x2, x3, x5, x6, x7, output
+        return x6
 
 
 

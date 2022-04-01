@@ -63,7 +63,7 @@ def train(train_type, test_type, cls):
 
     test_data, label = to_batch_test("data/arr/spectrs_" + cls + "_test")
 
-    net = AE()
+    net = AE(8)
 
     criterion = nn.MSELoss()
     optimizer = torch.optim.Adam(net.parameters(), lr=1e-3)
@@ -89,13 +89,10 @@ def train(train_type, test_type, cls):
             net.train()
             input = d.float().to(device)
             optimizer.zero_grad()
-            x1, x2, x3, x5, x6, x7, output = net(input)
+            output = net(input)
 
             loss = criterion(output, input)
-            if train_type == "LBL":
-                loss += 0.3*criterion(x1, x7)
-                loss += 0.3*criterion(x2, x6)
-                loss += 0.3*criterion(x3, x5)
+
 
             loss.backward()
             optimizer.step()
