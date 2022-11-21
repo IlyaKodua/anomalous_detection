@@ -9,17 +9,7 @@ from test import*
 BATCH_SIZE = 1024
 
 
-def initialize_weights(m):
-  if isinstance(m, nn.Conv2d):
-      nn.init.xavier_normal_(m.weight.data)
-      if m.bias is not None:
-          nn.init.constant_(m.bias.data, 0)
-  elif isinstance(m, nn.BatchNorm2d):
-      nn.init.constant_(m.weight.data, 1)
-      nn.init.constant_(m.bias.data, 0)
-  elif isinstance(m, nn.Linear):
-      nn.init.xavier_uniform(m.weight.data)
-      nn.init.constant_(m.bias.data, 0)
+
 
 
 
@@ -54,7 +44,7 @@ def to_batch_test(file):
         lables.append(d["labels"])
     return output, lables
 
-def train(train_type, test_type, cls):
+def train(train_type, test_type, cls, NUM):
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -63,24 +53,25 @@ def train(train_type, test_type, cls):
 
     test_data, label = to_batch_test("data/arr/spectrs_" + cls + "_test")
 
-    net = AE()
+    if NUM == 4:
+        net = AE4()
+    elif NUM == 5:
+        net = AE5()
+    elif NUM == 6:
+        net = AE6()
+    elif NUM == 7:
+        net = AE7()
+    elif NUM == 8:
+        net = AE8()
 
-    criterion = nn.MSELoss()
+
     optimizer = torch.optim.Adam(net.parameters(), lr=1e-3)
 
     # net = forward(net)
 
     net.to(device)
-    criterion.to(device)
 
-
-    net = nn.DataParallel(net)
-
-
-    epoch = 1
-
-
-
+    epoch = 10
 
 
     for i in range(epoch):
@@ -89,13 +80,11 @@ def train(train_type, test_type, cls):
             net.train()
             input = d.float().to(device)
             optimizer.zero_grad()
-            x1, x2, x3, x5, x6, x7, output = net(input)
 
-            loss = criterion(output, input)
             if train_type == "LBL":
-                loss += 0.3*criterion(x1, x7)
-                loss += 0.3*criterion(x2, x6)
-                loss += 0.3*criterion(x3, x5)
+                loss = net.get_lbl(input)
+            else:
+                loss = net.get_classic(input)
 
             loss.backward()
             optimizer.step()
@@ -103,7 +92,7 @@ def train(train_type, test_type, cls):
 
 
         
-    validation(net, test_data, label, criterion, train_type, test_type, cls)
+    validation(net, test_data, label, train_type, test_type, cls)
         
 
 

@@ -4,152 +4,246 @@ import torch.nn.functional as F
 
 
 
-class AE(nn.Module):
+class AE4(nn.Module):
 
     def __init__(self):
         super().__init__()
         
-        self.l1 = nn.Sequential(
+        self.model = nn.ModuleList()
+
+        self.model.append(nn.Sequential(
             nn.Linear(128,128),
             nn.ReLU(inplace=True),
-            nn.BatchNorm2d(1))
-        self.l2 = nn.Sequential(
+            nn.BatchNorm1d(1)))
+        self.model.append(nn.Sequential(
             nn.Linear(128,128),
             nn.ReLU(inplace=True),
-            nn.BatchNorm2d(1))
-        self.l3 = nn.Sequential(
+            nn.BatchNorm1d(1)))
+        self.model.append(nn.Sequential(
             nn.Linear(128,128),
             nn.ReLU(inplace=True),
-            nn.BatchNorm2d(1))
-        self.l4 = nn.Sequential(
-            nn.Linear(128,32),
-            nn.ReLU(inplace=True),
-            nn.BatchNorm2d(1))
-        self.l5 = nn.Sequential(
-            nn.Linear(32,128),
-            nn.ReLU(inplace=True),
-            nn.BatchNorm2d(1))
-        self.l6 = nn.Sequential(
+            nn.BatchNorm1d(1)))
+        self.model.append(nn.Sequential(
             nn.Linear(128,128),
-            nn.ReLU(inplace=True),
-            nn.BatchNorm2d(1))
-        self.l7 = nn.Sequential(
-            nn.Linear(128,128),
-            nn.ReLU(inplace=True),
-            nn.BatchNorm2d(1))
-        self.l8 = nn.Sequential(
-            nn.Linear(128,128),
-            nn.Tanh())
+            nn.Tanh()))
 
-    def forward(self,x):
-        x1 = self.l1(x)
-        x2 = self.l2(x1)
-        x3 = self.l3(x2)
-        x4 = self.l4(x3)
-        x5 = self.l5(x4)
-        x6 = self.l6(x5)
-        x7 = self.l7(x6)
-        output = self.l8(x7)
-        return x1, x2, x3, x5, x6, x7, output
+    def get_classic(self, x1):
+        x1, x2, x3, x4, x5  = self.forward(x1)
+        return F.mse_loss(x1,x5)
+
+    def get_lbl(self, x1):
+        x1, x2, x3, x4, x5  = self.forward(x1)
+        return F.mse_loss(x1,x5) + F.mse_loss(x2,x4)
+
+    def forward(self,x1):
+        x2 = self.model[0](x1)
+        x3 = self.model[1](x2)
+        x4 = self.model[2](x3)
+        x5 = self.model[3](x4)
+        return x1, x2, x3, x4, x5
 
 
+class AE5(nn.Module):
 
-
-
-
-
-class DoubleConv(nn.Module):
-    """(convolution => [BN] => ReLU) * 2"""
-
-    def __init__(self, in_channels, out_channels, mid_channels=None):
+    def __init__(self):
         super().__init__()
-        if not mid_channels:
-            mid_channels = out_channels
-        self.double_conv = nn.Sequential(
-            nn.Conv2d(in_channels, mid_channels, kernel_size=3, padding=1, bias=False),
-            nn.BatchNorm2d(mid_channels),
+        
+        self.model = nn.ModuleList()
+
+        self.model.append(nn.Sequential(
+            nn.Linear(128,128),
             nn.ReLU(inplace=True),
-            nn.Conv2d(mid_channels, out_channels, kernel_size=3, padding=1, bias=False),
-            nn.BatchNorm2d(out_channels),
-            nn.ReLU(inplace=True)
-        )
+            nn.BatchNorm1d(1)))
+        self.model.append(nn.Sequential(
+            nn.Linear(128,128),
+            nn.ReLU(inplace=True),
+            nn.BatchNorm1d(1)))
+        self.model.append(nn.Sequential(
+            nn.Linear(128,128),
+            nn.ReLU(inplace=True),
+            nn.BatchNorm1d(1)))
+        self.model.append(nn.Sequential(
+            nn.Linear(128,128),
+            nn.ReLU(inplace=True),
+            nn.BatchNorm1d(1)))
+        self.model.append(nn.Sequential(
+            nn.Linear(128,128),
+            nn.Tanh()))
 
-    def forward(self, x):
-        return self.double_conv(x)
+    def get_classic(self, x1):
+        x1, x2, x3, x4, x5, x6  = self.forward(x1)
+        return F.mse_loss(x1,x6)
+
+    def get_lbl(self, x1):
+        x1, x2, x3, x4, x5, x6  = self.forward(x1)
+        return F.mse_loss(x1,x6) + F.mse_loss(x2,x5) + F.mse_loss(x3,x4)
 
 
-class Down(nn.Module):
-    """Downscaling with maxpool then double conv"""
 
-    def __init__(self, in_channels, out_channels):
+
+    def forward(self,x1):
+        x2 = self.model[0](x1)
+        x3 = self.model[1](x2)
+        x4 = self.model[2](x3)
+        x5 = self.model[3](x4)
+        x6 = self.model[4](x5)
+        return x1, x2, x3, x4, x5, x6 
+
+
+class AE6(nn.Module):
+
+    def __init__(self):
         super().__init__()
-        self.maxpool_conv = nn.Sequential(
-            nn.MaxPool2d(2),
-            DoubleConv(in_channels, out_channels)
-        )
+        
+        self.model = nn.ModuleList()
 
-    def forward(self, x):
-        return self.maxpool_conv(x)
+        self.model.append(nn.Sequential(
+            nn.Linear(128,128),
+            nn.ReLU(inplace=True),
+            nn.BatchNorm1d(1)))
+        self.model.append(nn.Sequential(
+            nn.Linear(128,128),
+            nn.ReLU(inplace=True),
+            nn.BatchNorm1d(1)))
+        self.model.append(nn.Sequential(
+            nn.Linear(128,128),
+            nn.ReLU(inplace=True),
+            nn.BatchNorm1d(5)))
+        self.model.append(nn.Sequential(
+            nn.Linear(128,128),
+            nn.ReLU(inplace=True),
+            nn.BatchNorm1d(5)))
+        self.model.append(nn.Sequential(
+            nn.Linear(128,128),
+            nn.ReLU(inplace=True),
+            nn.BatchNorm1d(5)))
+        self.model.append(nn.Sequential(
+            nn.Linear(128,128),
+            nn.Tanh()))
+
+    def get_classic(self, x1):
+        x1, x2, x3, x4, x5, x6, x7  = self.forward(x1)
+        return F.mse_loss(x1,x7)
+
+    def get_lbl(self, x1):
+        x1, x2, x3, x4, x5, x6, x7  = self.forward(x1)
+        return F.mse_loss(x1,x7) + F.mse_loss(x2,x6) + F.mse_loss(x3,x5)
 
 
-class Up(nn.Module):
-    """Upscaling then double conv"""
 
-    def __init__(self, in_channels, out_channels, bilinear=True):
+
+    def forward(self,x1):
+        x2 = self.model[0](x1)
+        x3 = self.model[1](x2)
+        x4 = self.model[2](x3)
+        x5 = self.model[3](x4)
+        x6 = self.model[4](x5)
+        x7 = self.model[5](x6)
+        return x1, x2, x3, x4, x5, x6, x7 
+
+
+
+class AE7(nn.Module):
+
+    def __init__(self):
         super().__init__()
+        
+        self.model = nn.ModuleList()
 
-        # if bilinear, use the normal convolutions to reduce the number of channels
-        if bilinear:
-            self.up = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True)
-            self.conv = DoubleConv(in_channels, out_channels, in_channels // 2)
-        else:
-            self.up = nn.ConvTranspose2d(in_channels, in_channels, kernel_size=2, stride=2)
-            self.conv = DoubleConv(in_channels, out_channels)
+        self.model.append(nn.Sequential(
+            nn.Linear(128,128),
+            nn.ReLU(inplace=True)))
+        self.model.append(nn.Sequential(
+            nn.Linear(128,128),
+            nn.ReLU(inplace=True)))
+        self.model.append(nn.Sequential(
+            nn.Linear(128,128),
+            nn.ReLU(inplace=True)))
+        self.model.append(nn.Sequential(
+            nn.Linear(128,128),
+            nn.ReLU(inplace=True)))
+        self.model.append(nn.Sequential(
+            nn.Linear(128,128),
+            nn.ReLU(inplace=True)))
+        self.model.append(nn.Sequential(
+            nn.Linear(128,128),
+            nn.ReLU(inplace=True)))
+        self.model.append(nn.Sequential(
+            nn.Linear(128,128),
+            nn.ReLU(inplace=True)))
+        self.model.append(nn.Sequential(
+            nn.Linear(128,128),
+            nn.Tanh()))
 
-    def forward(self, x1):
-        x1 = self.up(x1)
+    def get_classic(self, x1):
+        x1, x2, x3, x4, x5, x6, x7, x8, x9  = self.forward(x1)
+        return F.mse_loss(x1,x9)
 
-        return self.conv(x1)
+    def get_lbl(self, x1):
+        x1, x2, x3, x4, x5, x6, x7, x8, x9  = self.forward(x1)
+        return F.mse_loss(x1,x9) + F.mse_loss(x2,x8) + F.mse_loss(x3,x7)+ F.mse_loss(x4,x6)
+
+    def forward(self,x1):
+        x2 = self.model[0](x1)
+        x3 = self.model[1](x2)
+        x4 = self.model[2](x3)
+        x5 = self.model[3](x4)
+        x6 = self.model[4](x5)
+        x7 = self.model[5](x6)
+        x8 = self.model[6](x7)
+        x9 = self.model[7](x8)
+        return x1, x2, x3, x4, x5, x6, x7, x8, x9
 
 
-class OutConv(nn.Module):
-    def __init__(self, in_channels, out_channels):
-        super(OutConv, self).__init__()
-        self.conv = nn.Conv2d(in_channels, out_channels, kernel_size=1)
-
-    def forward(self, x):
-        return self.conv(x)
 
 
+class AE8(nn.Module):
 
+    def __init__(self):
+        super().__init__()
+        
+        self.model = nn.ModuleList()
 
-class UNet(nn.Module):
-    def __init__(self, bilinear=True):
-        super(UNet, self).__init__()
-        self.n_channels = 1
-        self.n_classes = 1
-        self.bilinear = bilinear
+        self.model.append(nn.Sequential(
+            nn.Linear(128,128),
+            nn.ReLU(inplace=True)))
+        self.model.append(nn.Sequential(
+            nn.Linear(128,128),
+            nn.ReLU(inplace=True)))
+        self.model.append(nn.Sequential(
+            nn.Linear(128,128),
+            nn.ReLU(inplace=True)))
+        self.model.append(nn.Sequential(
+            nn.Linear(128,128),
+            nn.ReLU(inplace=True)))
+        self.model.append(nn.Sequential(
+            nn.Linear(128,128),
+            nn.ReLU(inplace=True)))
+        self.model.append(nn.Sequential(
+            nn.Linear(128,128),
+            nn.ReLU(inplace=True)))
+        self.model.append(nn.Sequential(
+            nn.Linear(128,128),
+            nn.ReLU(inplace=True)))
+        self.model.append(nn.Sequential(
+            nn.Linear(128,128),
+            nn.Tanh()))
 
-        self.inc = DoubleConv(1, 32)
-        self.down1 = Down(32, 32)
-        self.down2 = Down(32, 32)
-        self.down3 = Down(32, 32)
-        factor = 2 if bilinear else 1
-        self.down4 = Down(32, 32)
-        self.up1 = Up(32, 32, bilinear)
-        self.up2 = Up(32, 32, bilinear)
-        self.up3 = Up(32, 32, bilinear)
-        self.up4 = Up(32, 32, bilinear)
-        self.outc = OutConv(32, 1)
+    def get_classic(self, x1):
+        x1, x2, x3, x4, x5, x6, x7, x8, x9  = self.forward(x1)
+        return F.mse_loss(x1,x9)
 
-    def forward(self, x):
-        x = self.inc(x)
-        x = self.down1(x)
-        x = self.down2(x)
-        x = self.down3(x)
-        x = self.down4(x)
-        x = self.up1(x)
-        x = self.up2(x)
-        x = self.up3(x)
-        x = self.up4(x)
-        return self.outc(x)
+    def get_lbl(self, x1):
+        x1, x2, x3, x4, x5, x6, x7, x8, x9  = self.forward(x1)
+        return F.mse_loss(x1,x9) + F.mse_loss(x2,x8) + F.mse_loss(x3,x7)+ F.mse_loss(x4,x6)
+
+    def forward(self,x1):
+        x2 = self.model[0](x1)
+        x3 = self.model[1](x2)
+        x4 = self.model[2](x3)
+        x5 = self.model[3](x4)
+        x6 = self.model[4](x5)
+        x7 = self.model[5](x6)
+        x8 = self.model[6](x7)
+        x9 = self.model[7](x8)
+        return x1, x2, x3, x4, x5, x6, x7, x8, x9

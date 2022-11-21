@@ -6,13 +6,13 @@ from sound_to_spectrum import*
 import numpy as np
 from random import shuffle
 
-classes = ["fan"] 
+classes = ["fan", "valve"] 
 tips = ["train", "test"]
 
 for cls in classes:
 	print(cls)
 	for tip in tips:
-		list_files = glob.glob("/home/liya/research/sound_data/ToyCar/" + tip + "/*.wav")
+		list_files = glob.glob("/home/liya/datasets/dcase2020/train/" + cls + "/" + tip + "/*.wav")
 
 		shuffle(list_files)
 

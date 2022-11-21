@@ -19,7 +19,7 @@ def r_pirson(X,Y):
     return cov.item()
 
 
-def validation(net, data, label, criterion, train_type, test_type, cls):
+def validation(net, data, label, train_type, test_type, cls):
     print("Val")
     net.eval()
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -28,29 +28,27 @@ def validation(net, data, label, criterion, train_type, test_type, cls):
 
     y_pred = []
      
-    cnt = 0 
-    cnt_n = 0
+    # cnt = 0 
+    # cnt_n = 0
     for x in data:
         net.eval()
         with torch.no_grad():
             input = x.float().to(device)
             loss_arr = np.zeros(input.shape[0])
             for i in range(input.shape[0]):
-                x1, x2, x3, x5, x6, x7, output = net(input)
 
-                loss = criterion(output, input)
-                cnt += r_pirson(x3, x5)
-                cnt_n += 1
+                # cnt += r_pirson(array[n], array[n + 2])
+                # cnt_n += 1
                 if test_type == "LBL":
-                    loss += criterion(x1, x7)
-                    loss += criterion(x2, x6)
-                    loss += criterion(x3, x5)
-                loss_arr[i] = loss.cpu().item()
+                    loss = net.get_lbl(input)
+                else:
+                    loss = net.get_classic(input)
+                    loss_arr[i] = loss.cpu().item()
 
             y_pred.append(np.mean(loss_arr))
 
     
-    cnt /= (cnt_n)
+    # cnt /= (cnt_n)
 
     y_pred = np.array(y_pred)
     y_true = np.array(label)
@@ -66,7 +64,7 @@ def validation(net, data, label, criterion, train_type, test_type, cls):
     print("Anomaly acc: ", auc, " %")
     print("Anomaly acc 2: ", auc2, " %")
     print("pAnomaly acc: ", pauc, " %")
-    print("Corr: ", cnt)
+    # print("Corr: ", cnt)
     # print("Noise acc: ", ls_noise)
 
 

@@ -3,7 +3,7 @@ import numpy as np
 from train import*
 import time
 
-classes = ["fan"]
+classes = ["valve"]
 
 
 test_types = ["classic"]
@@ -13,4 +13,4 @@ for cls in classes:
     for train_type in train_types:
         for test_type in test_types:
             start = time.time() 
-            train(train_type, test_type, cls)
+            train(train_type, test_type, cls, 8)

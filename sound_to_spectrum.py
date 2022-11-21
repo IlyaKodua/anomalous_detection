@@ -17,6 +17,7 @@ def to_mel(file_name):
 
 def norm_to_log(mel):
 	# mel = np.log(1 + mel)/ np.log(1 + np.max(mel))
+	mel = librosa.power_to_db(mel, ref=np.max)
 	mel = 2 * (mel - np.min(mel)) / (np.max(mel) - np.min(mel)) - 1
 	return mel
 
